@@ -35,7 +35,6 @@ class Game(object):
 		# Check for game over
 		self.check_for_game_over()
 
-
 	def display(self):
 		os.system('clear')
 		print()
@@ -161,16 +160,12 @@ class Game(object):
 			self.gameOver = True
 
 
-
-
-
-
+""" main """
 game = Game()
 
 while not game.gameOver:
 	
 	game.display()
-	print(int(math.log10(8)))
 
 	choice = input("w, a, s, d, or q? ")
 	if choice == "w":
