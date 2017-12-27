@@ -4,13 +4,17 @@ import math
 
 class Game(object):
 
-	def __init__(self):
+	def __init__(self, highscore):
 
-		# Initialize score as 0
+		# Initialize high score
+		self.highscore = int(highscore)
+
+		# Initialize current score as 0
 		self.score = 0
 
 		# Initialize the board with two random tiles
 		self.board = np.zeros((4, 4), dtype=np.int)
+		self.totalTiles = 0 # Incremented by add_tile
 		self.add_tile()
 		self.add_tile()
 
@@ -32,14 +36,20 @@ class Game(object):
 		# Update the board
 		self.board[emptyCell[0]][emptyCell[1]] = tileVal
 
+		# Update totalTiles
+		self.totalTiles += 1
+
+		# Check if high score needs to be updated
+		self.check_high_score()
+
 		# Check for game over
-		self.check_for_game_over()
+		self.check_for_game_over() # Write high score to file here.
 
 	def display(self):
-		os.system('clear')
+		# os.system('clear')
 		print()
 		print("Current Score: " + str(self.score))
-		print("High Score: 10090")
+		print("High Score: " + str(self.highscore))
 		print()
 
 		for row in range(4):
@@ -65,6 +75,7 @@ class Game(object):
 		print()
 
 	def slide_left(self):
+		cellsChanged = 0
 		for row in range(4):
 			possibleMergeVal = 0
 			nextOpenIndex = 0
@@ -75,17 +86,23 @@ class Game(object):
 						# Merge
 						self.board[row][nextOpenIndex-1] = (currVal * 2)
 						self.board[row][col] = 0
-						self.possibleMergeVal = (currVal * 2)
+						possibleMergeVal = (currVal * 2)
+						self.score += (currVal * 2)
+						self.totalTiles -= 1
+						cellsChanged += 1
 					else:
 						if nextOpenIndex != col:
 							# Slide to the left
 							self.board[row][nextOpenIndex] = currVal
 							self.board[row][col] = 0
+							cellsChanged += 1
 						possibleMergeVal = currVal
 						nextOpenIndex += 1
-		self.add_tile()
+		if cellsChanged != 0:
+			self.add_tile()
 
 	def slide_right(self):
+		cellsChanged = 0
 		for row in range(4):
 			possibleMergeVal = 0
 			nextOpenIndex = 3
@@ -96,17 +113,23 @@ class Game(object):
 						# Merge
 						self.board[row][nextOpenIndex+1] = (currVal * 2)
 						self.board[row][col] = 0
-						self.possibleMergeVal = (currVal * 2)
+						possibleMergeVal = (currVal * 2)
+						self.score += (currVal * 2)
+						self.totalTiles -= 1
+						cellsChanged += 1
 					else:
 						if nextOpenIndex != col:
 							# Slide to the right
 							self.board[row][nextOpenIndex] = currVal
 							self.board[row][col] = 0
+							cellsChanged += 1
 						possibleMergeVal = currVal
 						nextOpenIndex -= 1
-		self.add_tile()
+		if cellsChanged != 0:
+			self.add_tile()
 
 	def slide_up(self):
+		cellsChanged = 0
 		for col in range(4):
 			possibleMergeVal = 0
 			nextOpenIndex = 0
@@ -117,17 +140,23 @@ class Game(object):
 						# Merge
 						self.board[nextOpenIndex-1][col] = (currVal * 2)
 						self.board[row][col] = 0
-						self.possibleMergeVal = (currVal * 2)
+						possibleMergeVal = (currVal * 2)
+						self.score += (currVal * 2)
+						self.totalTiles -= 1
+						cellsChanged += 1
 					else:
 						if nextOpenIndex != row:
 							# Slide up
 							self.board[nextOpenIndex][col] = currVal
 							self.board[row][col] = 0
+							cellsChanged += 1
 						possibleMergeVal = currVal
 						nextOpenIndex += 1
-		self.add_tile()
+		if cellsChanged != 0:
+			self.add_tile()
 
 	def slide_down(self):
+		cellsChanged = 0
 		for col in range(4):
 			possibleMergeVal = 0
 			nextOpenIndex = 3
@@ -138,30 +167,43 @@ class Game(object):
 						# Merge
 						self.board[nextOpenIndex+1][col] = (currVal * 2)
 						self.board[row][col] = 0
-						self.possibleMergeVal = (currVal * 2)
+						possibleMergeVal = (currVal * 2)
+						self.score += (currVal * 2)
+						self.totalTiles -= 1
+						cellsChanged += 1
 					else:
 						if nextOpenIndex != row:
 							# Slide up
 							self.board[nextOpenIndex][col] = currVal
 							self.board[row][col] = 0
+							cellsChanged += 1
 						possibleMergeVal = currVal
 						nextOpenIndex -= 1
-		self.add_tile()
+		if cellsChanged != 0:
+			self.add_tile()
+
+	def check_high_score(self):
+		if self.score > self.highscore:
+			self.highscore = self.score
 
 	def check_for_game_over(self):
-
-		# Update the list of empty cells
-		xVal, yVal = np.where(self.board == 0)
-		emptyCells = list(zip(xVal,yVal))
-
-		# Check if the board is now full
-		if len(emptyCells) == 0:
-			# If full, the game is over
+		if self.totalTiles == 16:
 			self.gameOver = True
+
+	def update_high_score(self):
+		# Write high score to file
+		f = open("highscore.txt", "w")
+		f.write(str(self.highscore))
+		f.close()
 
 
 """ main """
-game = Game()
+
+f = open("highscore.txt", "r")
+highscore = f.read()
+f.close()
+
+game = Game(highscore)
 
 while not game.gameOver:
 	
@@ -183,5 +225,6 @@ while not game.gameOver:
 
 	if game.gameOver:
 		game.display()
+		game.update_high_score()
 		print("Game Over.")
 		print()
