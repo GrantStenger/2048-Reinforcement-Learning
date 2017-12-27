@@ -29,8 +29,8 @@ class player:
 		model.add(Activation('softmax'))
 
 		model.compile(loss='categorical_crossentropy',
-             optimizer='rmsprop',
-             metrics=['accuracy'])
+			optimizer='rmsprop',
+			metrics=['accuracy'])
 
 		return model
 
@@ -53,6 +53,3 @@ for e in range(episodes):
 	state = Game(0)
 	for time in range(500):
 		action = agent.act(state)
-
-
-
