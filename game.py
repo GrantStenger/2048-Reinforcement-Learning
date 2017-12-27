@@ -43,10 +43,10 @@ class Game(object):
 		self.check_high_score()
 
 		# Check for game over
-		self.check_for_game_over() # Write high score to file here.
+		self.check_for_game_over()
 
 	def display(self):
-		# os.system('clear')
+		os.system('clear')
 		print()
 		print("Current Score: " + str(self.score))
 		print("High Score: " + str(self.highscore))
@@ -59,6 +59,8 @@ class Game(object):
 					print(end=".   ")
 				elif int(math.log10(self.board[row][col])) == 0: 
 					print(self.board[row][col], end="   ")
+					#print(Fore.RED + 'hi')
+					#print(Fore.BLACK)
 				elif int(math.log10(self.board[row][col])) == 1: 
 					print(self.board[row][col], end="  ")
 				elif int(math.log10(self.board[row][col])) == 2: 
@@ -195,36 +197,3 @@ class Game(object):
 		f = open("highscore.txt", "w")
 		f.write(str(self.highscore))
 		f.close()
-
-
-""" main """
-
-f = open("highscore.txt", "r")
-highscore = f.read()
-f.close()
-
-game = Game(highscore)
-
-while not game.gameOver:
-	
-	game.display()
-
-	choice = input("w, a, s, d, or q? ")
-	if choice == "w":
-		game.slide_up()
-	elif choice == "a":
-		game.slide_left()
-	elif choice == "s":
-		game.slide_down()
-	elif choice == "d":
-		game.slide_right()
-	elif choice == "q":
-		game.gameOver = True
-	else:
-		print("That wasn't a choice")
-
-	if game.gameOver:
-		game.display()
-		game.update_high_score()
-		print("Game Over.")
-		print()
