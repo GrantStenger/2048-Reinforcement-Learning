@@ -46,12 +46,15 @@ class Game(object):
 		self.check_for_game_over()
 
 	def display(self):
+
+		# Clear the screen and print the score
 		os.system('clear')
 		print()
 		print("Current Score: " + str(self.score))
 		print("High Score: " + str(self.highscore))
 		print()
 
+		# Iterate through each tile and print accordingly
 		for row in range(4):
 			print(end="  ")
 			for col in range(4):
@@ -59,8 +62,6 @@ class Game(object):
 					print(end=".   ")
 				elif int(math.log10(self.board[row][col])) == 0: 
 					print(self.board[row][col], end="   ")
-					#print(Fore.RED + 'hi')
-					#print(Fore.BLACK)
 				elif int(math.log10(self.board[row][col])) == 1: 
 					print(self.board[row][col], end="  ")
 				elif int(math.log10(self.board[row][col])) == 2: 
@@ -77,6 +78,7 @@ class Game(object):
 		print()
 
 	def slide_left(self):
+		# If left is selected, do...
 		cellsChanged = 0
 		for row in range(4):
 			possibleMergeVal = 0
@@ -104,6 +106,7 @@ class Game(object):
 			self.add_tile()
 
 	def slide_right(self):
+		# If right is selected, do...
 		cellsChanged = 0
 		for row in range(4):
 			possibleMergeVal = 0
@@ -131,6 +134,7 @@ class Game(object):
 			self.add_tile()
 
 	def slide_up(self):
+		# If up is selected, do...
 		cellsChanged = 0
 		for col in range(4):
 			possibleMergeVal = 0
@@ -158,6 +162,7 @@ class Game(object):
 			self.add_tile()
 
 	def slide_down(self):
+		# If down is selected, do...
 		cellsChanged = 0
 		for col in range(4):
 			possibleMergeVal = 0
@@ -185,11 +190,15 @@ class Game(object):
 			self.add_tile()
 
 	def check_high_score(self):
+		# If the score is greater than the high score...
 		if self.score > self.highscore:
+			# Update high score
 			self.highscore = self.score
 
 	def check_for_game_over(self):
+		# If there are 16 non-zero tiles...
 		if self.totalTiles == 16:
+			# The game is over
 			self.gameOver = True
 
 	def update_high_score(self):
