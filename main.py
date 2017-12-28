@@ -16,16 +16,33 @@ while not game.gameOver:
 
     # Prompt for user input
     choice = input("w, a, s, d, or q? ")
-    if choice == "w":
-        game.slide_up()
-    elif choice == "a":
-        game.slide_left()
-    elif choice == "s":
-        game.slide_down()
+
+    # If user chooses left...
+    if choice == "a":
+        # Move left
+        game.next_move("left")
+
+    # If user chooses right...
     elif choice == "d":
-        game.slide_right()
+        # Move right
+        game.next_move("right")
+
+    # If user chooses up...
+    elif choice == "w":
+        # Move up
+        game.next_move("up")
+
+    # If user chooses down...
+    elif choice == "s":
+        # Move down
+        game.next_move("down")
+
+    # If user chooses to quit
     elif choice == "q":
+        # Set gameOver to True
         game.gameOver = True
+
+    # Otherwise...
     else:
         print("That wasn't a choice")
 
