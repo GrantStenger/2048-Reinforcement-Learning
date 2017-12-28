@@ -80,6 +80,7 @@ class Game(object):
 	def slide_left(self):
 		# If left is selected, do...
 		cellsChanged = 0
+		original_score = self.score
 		for row in range(4):
 			possibleMergeVal = 0
 			nextOpenIndex = 0
@@ -102,12 +103,19 @@ class Game(object):
 							cellsChanged += 1
 						possibleMergeVal = currVal
 						nextOpenIndex += 1
+
+		# Add a new tile only if the board has changed
 		if cellsChanged != 0:
 			self.add_tile()
+
+		# Return the score_increase to help train the AI
+		score_increase = self.score - original_score
+		return score_increase
 
 	def slide_right(self):
 		# If right is selected, do...
 		cellsChanged = 0
+		original_score = self.score
 		for row in range(4):
 			possibleMergeVal = 0
 			nextOpenIndex = 3
@@ -130,12 +138,19 @@ class Game(object):
 							cellsChanged += 1
 						possibleMergeVal = currVal
 						nextOpenIndex -= 1
+
+		# Add a new tile only if the board has changed
 		if cellsChanged != 0:
 			self.add_tile()
+
+		# Return the score_increase to help train the AI
+		score_increase = self.score - original_score
+		return score_increase
 
 	def slide_up(self):
 		# If up is selected, do...
 		cellsChanged = 0
+		original_score = self.score
 		for col in range(4):
 			possibleMergeVal = 0
 			nextOpenIndex = 0
@@ -158,12 +173,19 @@ class Game(object):
 							cellsChanged += 1
 						possibleMergeVal = currVal
 						nextOpenIndex += 1
+
+		# Add a new tile only if the board has changed
 		if cellsChanged != 0:
 			self.add_tile()
+
+		# Return the score_increase to help train the AI
+		score_increase = self.score - original_score
+		return score_increase
 
 	def slide_down(self):
 		# If down is selected, do...
 		cellsChanged = 0
+		original_score = self.score
 		for col in range(4):
 			possibleMergeVal = 0
 			nextOpenIndex = 3
@@ -186,8 +208,14 @@ class Game(object):
 							cellsChanged += 1
 						possibleMergeVal = currVal
 						nextOpenIndex -= 1
+
+		# Add a new tile only if the board has changed
 		if cellsChanged != 0:
 			self.add_tile()
+
+		# Return the score_increase to help train the AI
+		score_increase = self.score - original_score
+		return score_increase
 
 	def check_high_score(self):
 		# If the score is greater than the high score...
@@ -206,3 +234,20 @@ class Game(object):
 		f = open("highscore.txt", "w")
 		f.write(str(self.highscore))
 		f.close()
+
+	def next_move(self, input_action):
+
+		# Find the reward for the chosen move
+		if input_action == "left":
+			reward = self.slide_left()
+		elif input_action == "right":
+			reward = self.slide_right()
+		elif input_action == "up":
+			reward = self.slide_up()
+		else:
+			reward = self.slide_down()
+
+		# Set isFinished to the status of gameOver
+		isFinished = self.gameOver
+			
+		return self.board, reward, isFinished
