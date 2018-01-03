@@ -46,7 +46,7 @@ while not game.gameOver:
     else:
         print("That wasn't a choice")
 
-    # Check for and perform game over sequence
+    # Check for game over sequence
     if game.gameOver:
         game.display()
         game.update_high_score()
