@@ -1,3 +1,5 @@
+""" Major improvements being made rn. Check in tomorrow. """
+
 import argparse
 import random
 import numpy as np
@@ -34,13 +36,10 @@ class Player(object):
 		model.compile(loss='mse',
 			optimizer='adam',
 			metrics=['accuracy'])
-
-		print("Finished building the model")
+		
 		return model
 
 	def trainNetwork(self, model, args):
-
-
 
 		# Initialize game state to communicate with emulator
 		game_state = Game(0)
@@ -77,15 +76,12 @@ def playGame(args):
 	model = player.model
 	player.trainNetwork(model, args)
 
-def main():
+if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='2048 QDL AI')
 	parser.add_argument('-m','--mode', help='Train / Run', required=True)
 	args = vars(parser.parse_args())
 	print(args)
 	playGame(args)
-
-if __name__ == "__main__":
-	main()
 
 
 
