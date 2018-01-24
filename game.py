@@ -251,16 +251,3 @@ class Game(object):
 		isFinished = self.gameOver
 			
 		return self.board, reward, isFinished
-
-	def reset(self):
-		# Reset current score to 0
-		self.score = 0
-
-		# Reset the board to blank with two random tiles
-		self.board = np.zeros((4, 4), dtype=np.int)
-		self.totalTiles = 0
-		self.add_tile()
-		self.add_tile()
-
-		# Reset game over to false
-		self.gameOver = False
