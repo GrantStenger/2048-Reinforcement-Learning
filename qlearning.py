@@ -1,15 +1,16 @@
+import argparse
 import random
 import numpy as np
 from game import Game
+from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Activation
 
-class player:
+class Player(object):
 	def __init__(self, ):
 		self.model = self.buildModel()
-		self.num_actions = 4
-		self.epsilon = 1.0
+		self.num_actions = 4 # number of valid actions
 
 	def buildModel(self):
 
@@ -28,10 +29,11 @@ class player:
 		model.add(Dense(units=4))
 		model.add(Activation('softmax'))
 
-		model.compile(loss='categorical_crossentropy',
-             optimizer='rmsprop',
-             metrics=['accuracy'])
-
+		# Compile model
+		model.compile(loss='mse',
+			optimizer='adam',
+			metrics=['accuracy'])
+		
 		return model
 
 	def act(self, state):
@@ -40,19 +42,51 @@ class player:
 		act_values = self.model.predict(state)
 		return np.argmax(act_values[0])
 
-""" main """
-agent = player()
-done = False
-batch_size = 32
-max_score = 0
-best = []
-episodes = 100
+def Train():
+	# Variables
+	epochs = 100
+	gamma = 0.9 # decay rate of past observations (try .98)
+	isFinished = False
+	batch_size = 32
+	learning_rate = .0001
+	D = deque() # Register where the actions will be stored
+	epsilon = 0.9 # Probability of doing a random move
 
-for e in range(episodes):
-	frames = []
-	state = Game(0)
-	for time in range(500):
-		action = agent.act(state)
+	# Initialize player and build model
+	agent = Player()
+	model = agent.model
 
+	# model.load_weights("model.h5")
 
+	for e in range(epochs):
+		game_state = Game(0).board
+		state_vector = game_state.flatten() # Flattens board
+		print(state_vector)
+		prediction = model.predict(np.array([state_vector])) # Predicts best move 
+		print(prediction)
 
+	"""
+    # Save trained model
+    model.save_weights("model.h5", overwrite=True)
+    with open("model.json", "w") as outfile:
+        json.dump(model.to_json(), outfile)
+    """
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description='2048 QDL AI')
+	parser.add_argument('-m','--mode', help='Train / Run', required=True)
+	args = vars(parser.parse_args())
+	if args['mode'] == "Train":
+		Train()
+	elif args['mode'] == "Run":
+		Run() #Functionality coming soon
+	else:
+		print()
+		print("Input takes form 'python qlearning.py -m Train' or 'python qlearning.py -m Run'")
+
+# Initialize Q Matrix
+# Choose an Action from Q
+# Perform action
+# Measure reward
+# Update Q
+# Repeat
