@@ -238,16 +238,26 @@ class Game(object):
 	def next_move(self, input_action):
 
 		# Find the reward for the chosen move
-		if input_action == "left":
+		if input_action == 0:
 			reward = self.slide_left()
-		elif input_action == "right":
+		elif input_action == 1:
 			reward = self.slide_right()
-		elif input_action == "up":
+		elif input_action == 2:
 			reward = self.slide_up()
 		else:
 			reward = self.slide_down()
-
-		# Set isFinished to the status of gameOver
-		isFinished = self.gameOver
 			
-		return self.board, reward, isFinished
+		return reward
+
+	def reset(self):
+
+		# Set score back to 0
+		self.score = 0
+
+		# Clear board and re-initilize with two random tiles
+		self.board = np.zeros((4, 4), dtype=np.int)
+		self.totalTiles = 0 # Incremented by add_tile
+		self.add_tile()
+		self.add_tile()
+
+		self.gameOver = False

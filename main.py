@@ -20,22 +20,22 @@ while not game.gameOver:
     # If user chooses left...
     if choice == "a":
         # Move left
-        game.next_move("left")
+        game.next_move(0)
 
     # If user chooses right...
     elif choice == "d":
         # Move right
-        game.next_move("right")
+        game.next_move(1)
 
     # If user chooses up...
     elif choice == "w":
         # Move up
-        game.next_move("up")
+        game.next_move(2)
 
     # If user chooses down...
     elif choice == "s":
         # Move down
-        game.next_move("down")
+        game.next_move(3)
 
     # If user chooses to quit
     elif choice == "q":
