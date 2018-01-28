@@ -46,7 +46,7 @@ class Player(object):
 
 def Train():
 	# Variables
-	epochs = 100
+	episodes = 100 # number of times the game is played
 	gamma = 0.9 # decay rate of past observations (try .98)
 	isFinished = False
 	batch_size = 32
