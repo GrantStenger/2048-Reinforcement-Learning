@@ -2,7 +2,6 @@
 import matplotlib.pyplot as plt
 from collections import deque
 from player import Player
-#import tensorflow as tf
 from game import Game
 import numpy as np
 import scipy.stats
@@ -11,20 +10,15 @@ import keras
 
 #Parameters Used
 EPISODES = 20000 # number of times the game is played
-EPSILON_INIT = 1 # initial probability of doing a random move
+EPSILON_INIT = .99 # initial probability of doing a random move
 EPSILON_DECAY = .999 # rate that epsilon decreases every move (if 0.999, after 700 moves epsilon=.5)
-BUFFER_BATCH_SIZE = 20
-
-# Parameters Currently Unused
-EPOCHS = 5 # initially set to 5 for fast training time
-BATCH_SIZE = 32 
-GAMMA = 0.9 # decay rate of past observations (try .98)
-LEARNING_RATE = .0001
+EPSILON_FINAL = 0.01 # to make sure the agent keeps exploring, minimum e of 0.01
+BUFFER_BATCH_SIZE = 25 # number of states and targets sampled per training round
 
 num_actions = 4 # up, down, left, right
 highscore = 0 # Initial high score set to 0
 epsilon = EPSILON_INIT # Set initial value of epsilon
-scores = []
+scores = [] # Stores the final score of every game
 
 # Initialize replay memory D where the actions will be stored
 D = deque()
@@ -34,7 +28,7 @@ player = Player()
 game = Game(highscore)
 
 # Play the game "EPISODES" number of times
-for i in range(EPISODES):
+for i in range(1, EPISODES):
 
 	# Start new game
 	game.reset() 
@@ -72,7 +66,6 @@ for i in range(EPISODES):
 
 			# Use the information from the replay_batch to predict the target value
 			targets = reward + GAMMA * player.model.predict(new_states)
-			
 
 			# Train the Q network
 			player.model.fit(states, targets, verbose=0)
@@ -84,15 +77,15 @@ for i in range(EPISODES):
 		#print()
 
 		t += 1 # increment timestep
-		epsilon = epsilon * EPSILON_DECAY # Update Epsilon
+		epsilon = EPSILON_INIT * EPSILON_DECAY**2 + EPSILON_FINAL # Update Epsilon
 		state = new_state # Update state
 
 	#print("Score: " + str(game.score))
 	scores.append(game.score)
+
+	# Display current training progress
 	if i % 10 == 0:
 		print(i)
-
-print(scores)
 
 # Plot Results
 x_axis = np.arange(0, len(scores), 1)
@@ -108,6 +101,8 @@ plt.title("Scores as Model Learns")
 plt.ylabel('Score')
 plt.xlabel('Episode')
 plt.show()
+
+print(scores)
 
 """
 Next Steps:
