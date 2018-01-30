@@ -14,6 +14,7 @@ EPSILON_INIT = .99 # initial probability of doing a random move
 EPSILON_DECAY = .999 # rate that epsilon decreases every move (if 0.999, after 700 moves epsilon=.5)
 EPSILON_FINAL = 0.01 # to make sure the agent keeps exploring, minimum e of 0.01
 BUFFER_BATCH_SIZE = 25 # number of states and targets sampled per training round
+GAMMA = 0.9 # decay rate of past observations (try .98 or 0.6)
 
 num_actions = 4 # up, down, left, right
 highscore = 0 # Initial high score set to 0
