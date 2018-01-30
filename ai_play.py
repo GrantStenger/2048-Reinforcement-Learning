@@ -1,17 +1,19 @@
 #Packages
-import numpy as np
-from game import Game
+import matplotlib.pyplot as plt
 from collections import deque
-import random
 from player import Player
-import tensorflow as tf
+#import tensorflow as tf
+from game import Game
+import numpy as np
+import scipy.stats
+import random
 import keras
 
 #Parameters Used
-EPISODES = 5 # number of times the game is played
+EPISODES = 20000 # number of times the game is played
 EPSILON_INIT = 1 # initial probability of doing a random move
-EPSILON_DECAY = .999 # rate that epsilon decreases every move (after 700 moves epsilon=.5)
-BUFFER_BATCH_SIZE = 10
+EPSILON_DECAY = .999 # rate that epsilon decreases every move (if 0.999, after 700 moves epsilon=.5)
+BUFFER_BATCH_SIZE = 20
 
 # Parameters Currently Unused
 EPOCHS = 5 # initially set to 5 for fast training time
@@ -70,9 +72,10 @@ for i in range(EPISODES):
 
 			# Use the information from the replay_batch to predict the target value
 			targets = reward + GAMMA * player.model.predict(new_states)
+			
 
 			# Train the Q network
-			player.model.fit(states, targets)
+			player.model.fit(states, targets, verbose=0)
 
 		#print("action: " + str(action))
 		#print("reward: " + str(reward))
@@ -86,8 +89,25 @@ for i in range(EPISODES):
 
 	#print("Score: " + str(game.score))
 	scores.append(game.score)
+	if i % 10 == 0:
+		print(i)
 
 print(scores)
+
+# Plot Results
+x_axis = np.arange(0, len(scores), 1)
+slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x_axis, scores)
+print("Slope: ", slope)
+print("Intercept: ", intercept)
+print("R_value: ", r_value)
+print("P_value: ", p_value)
+print("Std_err: ", std_err)
+plt.scatter(x_axis, scores, s=10)
+plt.plot(x_axis, intercept + slope*x_axis, 'r', label='fitted line', alpha=0.4)
+plt.title("Scores as Model Learns")
+plt.ylabel('Score')
+plt.xlabel('Episode')
+plt.show()
 
 """
 Next Steps:
