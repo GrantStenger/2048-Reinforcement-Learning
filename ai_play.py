@@ -79,7 +79,6 @@ for i in range(1, EPISODES):
 				#print(target_future)
 				player.model.fit(np.array([state.flatten()]), target_future, epochs=1, verbose=0)
 
-
 			"""
 			# Parse tupes for states, actions, rewards, and new_states
 			states = np.array([e[0].flatten() for e in replay_batch])
