@@ -9,7 +9,7 @@ import random
 import keras
 
 #Parameters Used
-EPISODES = 11 # number of times the game is played
+EPISODES = 100 # number of times the game is played
 EPSILON_INIT = .99 # initial probability of doing a random move
 EPSILON_DECAY = .999 # rate that epsilon decreases every move (if 0.999, after 700 moves epsilon=.5)
 EPSILON_FINAL = 0.01 # to make sure the agent keeps exploring, minimum e of 0.01
@@ -44,7 +44,8 @@ for i in range(1, EPISODES):
 			action = random.randrange(num_actions)
 		# Otherwise, select the action with the highest predicted discounted future reward
 		else:
-			action = player.select_action(state)
+			q_func = player.model.predict(np.array([state.flatten()]))[0]
+			action = np.argmax(q_func)
 
 		# Execute this action and observe reward r and new state
 		reward = game.next_move(action)
@@ -60,6 +61,7 @@ for i in range(1, EPISODES):
 			# Sample random transitions from replay memory D
 			replay_batch = random.sample(D, BUFFER_BATCH_SIZE)
 
+			"""
 			for state, action, reward, new_state, done in replay_batch:
 				# If the game has ended, make target our reward
 				target = reward
@@ -78,20 +80,43 @@ for i in range(1, EPISODES):
 				#print("Target Future: ")
 				#print(target_future)
 				player.model.fit(np.array([state.flatten()]), target_future, epochs=1, verbose=0)
-
+			"""
 			"""
 			# Parse tupes for states, actions, rewards, and new_states
 			states = np.array([e[0].flatten() for e in replay_batch])
 			actions = np.array([e[1] for e in replay_batch])
 			rewards = np.array([e[2] for e in replay_batch])
 			new_states = np.array([e[3].flatten() for e in replay_batch])
+			done_batch = np.array([e[4].flatten() for e in replay_batch])
+			"""
 
+			for state, action, reward, new_state, done in replay_batch:
+				# If the game has ended, make target our reward
+				#target = reward
+				# Otherwise, make target our reward plus the predicted discounted future reward
+				#if not done:
+				#	target = reward + GAMMA * player.model.predict(np.array([new_state.flatten()]))
+				target = reward + GAMMA * player.model.predict(np.array([new_state.flatten()]))
+
+				player.model.fit(np.array([state.flatten()]), target, verbose=0)
+
+			"""
 			# Use the information from the replay_batch to predict the target value
-			targets = reward + GAMMA * player.model.predict(new_states)
+			q_n1 = player.model.predict(new_states)
+			print("New States:")
+			print(q_n1)
+			print()
 
+			targets = reward + GAMMA * q_n1
+
+			print("Targets: ")
+			print(targets)
+			print("States: ")
+			print(states)
 			# Train the Q network
 			player.model.fit(states, targets, verbose=0)
 			"""
+			
 
 		#print("action: " + str(action))
 		#print("reward: " + str(reward))

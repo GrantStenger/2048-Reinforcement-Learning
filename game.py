@@ -248,8 +248,8 @@ class Game(object):
 			reward = self.slide_down()
 
 		# Changing reward to 1 if player survives.
-		if reward > 0:
-			reward = 1
+		#if reward > 0:
+		#	reward = 1
 			
 		return reward
 

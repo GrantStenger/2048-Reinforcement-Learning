@@ -25,9 +25,9 @@ class Player(object):
 		model.add(Dense(units=256))
 		model.add(Activation('relu'))
 
-		# Output layer: 4 neurons (one for each action), softmax activation
+		# Output layer: 4 neurons (one for each action), consider going back to softmax activation
 		model.add(Dense(units=4))
-		model.add(Activation('softmax'))
+		model.add(Activation('linear'))
 
 		# Compile model
 		model.compile(loss='mse',
