@@ -9,12 +9,12 @@ import random
 import keras
 
 #Parameters Used
-EPISODES = 20000 # number of times the game is played
+EPISODES = 2000 # number of times the game is played
 EPSILON_INIT = .99 # initial probability of doing a random move
 EPSILON_DECAY = .999 # rate that epsilon decreases every move (if 0.999, after 700 moves epsilon=.5)
 EPSILON_FINAL = 0.01 # to make sure the agent keeps exploring, minimum e of 0.01
-BUFFER_BATCH_SIZE = 25 # number of states and targets sampled per training round
-GAMMA = 0.9 # decay rate of past observations (try .98 or 0.6)
+BUFFER_BATCH_SIZE = 10 # number of states and targets sampled per training round (25)
+GAMMA = 0.5 #(0.9)
 
 num_actions = 4 # up, down, left, right
 highscore = 0 # Initial high score set to 0
@@ -49,9 +49,10 @@ for i in range(1, EPISODES):
 		# Execute this action and observe reward r and new state
 		reward = game.next_move(action)
 		new_state = np.array(game.board, copy=True)
+		done = game.gameOver
 
 		# Store experience in replay memory D
-		D.append((state, action, reward, new_state))
+		D.append((state, action, reward, new_state, done))
 
 		# If there are enough items in the deque...
 		if len(D) >= BUFFER_BATCH_SIZE:
@@ -59,6 +60,17 @@ for i in range(1, EPISODES):
 			# Sample random transitions from replay memory D
 			replay_batch = random.sample(D, BUFFER_BATCH_SIZE)
 
+			for state, action, reward, new_state, done in replay_batch:
+
+				target = reward
+
+				if not done:
+					target = reward + GAMMA * np.amax(player.model.predict(new_state)[0])
+				target_f = player.model.predict(state)
+				target_f[0][action] = target
+				player.model.fit(state, target_f, epochs=1, verbose=0)
+
+			"""
 			# Parse tupes for states, actions, rewards, and new_states
 			states = np.array([e[0].flatten() for e in replay_batch])
 			actions = np.array([e[1] for e in replay_batch])
@@ -70,7 +82,18 @@ for i in range(1, EPISODES):
 
 			# Train the Q network
 			player.model.fit(states, targets, verbose=0)
+			"""
 
+		#print("action: " + str(action))
+		#print("reward: " + str(reward))
+		#print("State: ")
+		#print(state)
+		#print()
+
+		t += 1 # increment timestep
+		epsilon = EPSILON_INIT * EPSILON_DECAY**2 + EPSILON_FINAL # Update Epsilon
+		state = new_state # Update state
+			
 		#print("action: " + str(action))
 		#print("reward: " + str(reward))
 		#print("State: ")
@@ -96,7 +119,7 @@ print("Intercept: ", intercept)
 print("R_value: ", r_value)
 print("P_value: ", p_value)
 print("Std_err: ", std_err)
-plt.scatter(x_axis, scores, s=10)
+plt.scatter(x_axis, scores, s=5)
 plt.plot(x_axis, intercept + slope*x_axis, 'r', label='fitted line', alpha=0.4)
 plt.title("Scores as Model Learns")
 plt.ylabel('Score')
