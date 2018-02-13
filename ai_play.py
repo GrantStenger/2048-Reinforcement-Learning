@@ -7,6 +7,7 @@ import numpy as np
 import scipy.stats
 import random
 import keras
+import time
 
 #Parameters Used
 EPISODES = 2000000 # number of times the game is played
@@ -16,7 +17,8 @@ EPSILON_DECAY = 0.995 # rate that epsilon decreases every move (if 0.999, after 
 BUFFER_BATCH_SIZE = 32 # number of states and targets sampled per training round (25)
 GAMMA = 0.9 #(0.9)
 REPLAY_MEMORY = 50000
-OBSERVE_COUNT = 100000
+#OBSERVE_COUNT = 100000
+OBSERVE_COUNT = 500
 
 num_actions = 4 # up, down, left, right
 highscore = 0 # Initial high score set to 0
@@ -38,8 +40,11 @@ for episode_i in range(1, EPISODES):
     game.reset()
     state = np.array(game.board, copy=True) # 4x4 np array containing tile information
 
+    game_move_count = 0
     # Play game until no more moves can be made
+    start = time.time()
     while not game.gameOver:
+        game_move_count += 1
         # With probability epsilon, select a random action
         if np.random.rand() <= epsilon:
             action = random.randrange(num_actions)
@@ -95,13 +100,14 @@ for episode_i in range(1, EPISODES):
         state = new_state # Update state
         t += 1 # increment timestep
 
+    end = time.time()
     if episode_i % 1 == 0:
         if t < OBSERVE_COUNT:
             state = 'Observing'
         else:
             state = 'Exploring'
-        print("%s (%i): %i, %.2f" % (state, episode_i, int(game.score),
-            np.mean(scores)))
+        print("%s %i (%i): %i, %.2f, %.2f" % (state, game_move_count, episode_i, int(game.score),
+            np.mean(scores), (end - start)))
 
     scores.append(game.score)
     if len(scores) > 100:
