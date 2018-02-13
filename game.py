@@ -60,11 +60,11 @@ class Game(object):
 			for col in range(4):
 				if self.board[row][col] == 0:
 					print(end=".   ")
-				elif int(math.log10(self.board[row][col])) == 0: 
+				elif int(math.log10(self.board[row][col])) == 0:
 					print(self.board[row][col], end="   ")
-				elif int(math.log10(self.board[row][col])) == 1: 
+				elif int(math.log10(self.board[row][col])) == 1:
 					print(self.board[row][col], end="  ")
-				elif int(math.log10(self.board[row][col])) == 2: 
+				elif int(math.log10(self.board[row][col])) == 2:
 					print(self.board[row][col], end=" ")
 				elif self.board[row][col] == 1024:
 					print("1k", end="  ")
@@ -250,7 +250,7 @@ class Game(object):
 		# Changing reward to 1 if player survives.
 		#if reward > 0:
 		#	reward = 1
-			
+
 		return reward
 
 	def reset(self):

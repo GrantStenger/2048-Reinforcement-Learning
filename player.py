@@ -33,7 +33,7 @@ class Player(object):
 		model.compile(loss='mse',
 			optimizer='adam',
 			metrics=['accuracy'])
-		
+
 		return model
 
 	def q_predict(self, state):

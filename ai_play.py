@@ -9,12 +9,14 @@ import random
 import keras
 
 #Parameters Used
-EPISODES = 100 # number of times the game is played
-EPSILON_INIT = .99 # initial probability of doing a random move
-EPSILON_DECAY = .999 # rate that epsilon decreases every move (if 0.999, after 700 moves epsilon=.5)
-EPSILON_FINAL = 0.01 # to make sure the agent keeps exploring, minimum e of 0.01
-BUFFER_BATCH_SIZE = 10 # number of states and targets sampled per training round (25)
-GAMMA = 0.5 #(0.9)
+EPISODES = 2000000 # number of times the game is played
+EPSILON_INIT = 0.99 # initial probability of doing a random move
+EPSILON_FINAL = 0.01
+EPSILON_DECAY = 0.995 # rate that epsilon decreases every move (if 0.999, after 700 moves epsilon=.5)
+BUFFER_BATCH_SIZE = 32 # number of states and targets sampled per training round (25)
+GAMMA = 0.9 #(0.9)
+REPLAY_MEMORY = 50000
+OBSERVE_COUNT = 100000
 
 num_actions = 4 # up, down, left, right
 highscore = 0 # Initial high score set to 0
@@ -28,144 +30,83 @@ D = deque()
 player = Player()
 game = Game(highscore)
 
+t = 1
+
 # Play the game "EPISODES" number of times
-for i in range(1, EPISODES):
+for episode_i in range(1, EPISODES):
+    # Start new game
+    game.reset()
+    state = np.array(game.board, copy=True) # 4x4 np array containing tile information
 
-	# Start new game
-	game.reset() 
-	state = np.array(game.board, copy=True) # 4x4 np array containing tile information
-	t = 1 # timestep value
+    # Play game until no more moves can be made
+    while not game.gameOver:
+        # With probability epsilon, select a random action
+        if np.random.rand() <= epsilon:
+            action = random.randrange(num_actions)
+        # Otherwise, select the action with the highest predicted discounted future reward
+        else:
+            q_func = player.model.predict(np.array([state.flatten()]))[0]
+            action = np.argmax(q_func)
 
-	# Play game until no more moves can be made
-	while not game.gameOver:
+        # Execute this action and observe reward r and new state
+        reward = game.next_move(action)
+        new_state = np.array(game.board, copy=True)
+        done = game.gameOver
 
-		# With probability epsilon, select a random action
-		if np.random.rand() <= epsilon:
-			action = random.randrange(num_actions)
-		# Otherwise, select the action with the highest predicted discounted future reward
-		else:
-			q_func = player.model.predict(np.array([state.flatten()]))[0]
-			action = np.argmax(q_func)
+        # Store experience in replay memory D
 
-		# Execute this action and observe reward r and new state
-		reward = game.next_move(action)
-		new_state = np.array(game.board, copy=True)
-		done = game.gameOver
+        D.append((state, action, reward, new_state, done))
+        if len(D) > REPLAY_MEMORY:
+            D.popleft()
 
-		# Store experience in replay memory D
-		D.append((state, action, reward, new_state, done))
+        # If there are enough items in the deque...
+        if t > OBSERVE_COUNT:
+            # Sample random transitions from replay memory D
+            replay_batch = random.sample(list(D), BUFFER_BATCH_SIZE)
+            states, actions, rewards, new_states, dones = zip(*replay_batch)
 
-		# If there are enough items in the deque...
-		if len(D) >= BUFFER_BATCH_SIZE:
+            rewards = np.array(rewards)
 
-			# Sample random transitions from replay memory D
-			replay_batch = random.sample(D, BUFFER_BATCH_SIZE)
+            new_states = np.array(new_states)
+            new_states = new_states.reshape(-1, new_states.shape[1] *
+                    new_states.shape[2])
 
-			"""
-			for state, action, reward, new_state, done in replay_batch:
-				# If the game has ended, make target our reward
-				target = reward
-				# Otherwise, make target our reward plus the predicted discounted future reward
-				if not done:
-					target = reward + GAMMA * np.amax(player.model.predict(np.array([new_state.flatten()])))
+            states = np.array(states)
+            states = states.reshape(-1, states.shape[1] * states.shape[2])
 
-				#print("Target: ")
-				#print(target)
-				target_future = player.model.predict(np.array([state.flatten()]))
-				#print("Target Future: ")
-				#print(target_future)
-				target_future[0][action] = target
-				#print("State: ")
-				#print(np.array([state.flatten()]))
-				#print("Target Future: ")
-				#print(target_future)
-				player.model.fit(np.array([state.flatten()]), target_future, epochs=1, verbose=0)
-			"""
-			"""
-			# Parse tupes for states, actions, rewards, and new_states
-			states = np.array([e[0].flatten() for e in replay_batch])
-			actions = np.array([e[1] for e in replay_batch])
-			rewards = np.array([e[2] for e in replay_batch])
-			new_states = np.array([e[3].flatten() for e in replay_batch])
-			done_batch = np.array([e[4].flatten() for e in replay_batch])
-			"""
+            evaluated = player.model.predict(new_states)
 
-			for state, action, reward, new_state, done in replay_batch:
-				# If the game has ended, make target our reward
-				#target = reward
-				# Otherwise, make target our reward plus the predicted discounted future reward
-				#if not done:
-				#	target = reward + GAMMA * player.model.predict(np.array([new_state.flatten()]))
-				target = reward + GAMMA * player.model.predict(np.array([new_state.flatten()]))
+            targets = []
+            for i in range(BUFFER_BATCH_SIZE):
+                if dones[i]:
+                    targets.append(rewards[i])
+                else:
+                    targets.append(rewards[i] + GAMMA * np.max(evaluated[i]))
+            targets = np.array(targets)
 
-				player.model.fit(np.array([state.flatten()]), target, verbose=0)
+            for i in range(len(evaluated)):
+                evaluated[i][actions[i]] = targets[i]
 
-			"""
-			# Use the information from the replay_batch to predict the target value
-			q_n1 = player.model.predict(new_states)
-			print("New States:")
-			print(q_n1)
-			print()
+            player.model.fit(states, evaluated, verbose=0)
 
-			targets = reward + GAMMA * q_n1
+            if epsilon > EPSILON_FINAL:
+                epsilon *= EPSILON_DECAY
 
-			print("Targets: ")
-			print(targets)
-			print("States: ")
-			print(states)
-			# Train the Q network
-			player.model.fit(states, targets, verbose=0)
-			"""
-			
+        state = new_state # Update state
+        t += 1 # increment timestep
 
-		#print("action: " + str(action))
-		#print("reward: " + str(reward))
-		#print("State: ")
-		#print(state)
-		#print()
+    if episode_i % 1 == 0:
+        if t < OBSERVE_COUNT:
+            state = 'Observing'
+        else:
+            state = 'Exploring'
+        print("%s (%i): %i, %.2f" % (state, episode_i, int(game.score),
+            np.mean(scores)))
 
-		t += 1 # increment timestep
-		epsilon = EPSILON_INIT * EPSILON_DECAY**2 + EPSILON_FINAL # Update Epsilon
-		state = new_state # Update state
-			
-		#print("action: " + str(action))
-		#print("reward: " + str(reward))
-		#print("State: ")
-		#print(state)
-		#print()
+    scores.append(game.score)
+    if len(scores) > 100:
+        scores.pop(0)
 
-		t += 1 # increment timestep
-		epsilon = EPSILON_INIT * EPSILON_DECAY**2 + EPSILON_FINAL # Update Epsilon
-		state = new_state # Update state
-
-	#print("Score: " + str(game.score))
-	scores.append(game.score)
-
-	# Display current training progress
-	if i % 10 == 0:
-		print(i)
-
-
-# Plot Results
-x_axis = np.arange(0, len(scores), 1)
-slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x_axis, scores)
-print("Slope: ", slope)
-print("Intercept: ", intercept)
-print("R_value: ", r_value)
-print("P_value: ", p_value)
-print("Std_err: ", std_err)
-plt.scatter(x_axis, scores, s=5)
-plt.plot(x_axis, intercept + slope*x_axis, 'r', label='fitted line', alpha=0.4)
-plt.title("Scores as Model Learns")
-plt.ylabel('Score')
-plt.xlabel('Episode')
-plt.show()
 
 print(scores)
 
-
-"""
-Next Steps:
-Try a convolutional model
-Tweak hyperparameters, learning rate, epsilon value, etc.
-"""
