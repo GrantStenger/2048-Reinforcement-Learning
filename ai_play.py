@@ -116,3 +116,10 @@ for episode_i in range(1, EPISODES):
 
 print(scores)
 
+"""
+Next Steps:
+Try Monte Carlo tree search just to get the game working. Deep RL is hard.
+Tweak hyperparameters
+Train for WAY more time.
+
+"""
