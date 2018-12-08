@@ -1,12 +1,13 @@
 from game import Game
 
-# Read in high score from file
-f = open("highscore.txt", "r")
-highscore = f.read()
-f.close()
+# Define Constants
+LEFT = 0
+UP = 1
+RIGHT = 2
+DOWN = 3
 
 # Create game object (from game.py)
-game = Game(highscore)
+game = Game()
 
 # Run the game until game over
 while not game.gameOver:
@@ -20,22 +21,22 @@ while not game.gameOver:
     # If user chooses left...
     if choice == "a":
         # Move left
-        game.next_move(0)
+        game.move(LEFT)
 
     # If user chooses right...
     elif choice == "d":
         # Move right
-        game.next_move(1)
+        game.move(RIGHT)
 
     # If user chooses up...
     elif choice == "w":
         # Move up
-        game.next_move(2)
+        game.move(UP)
 
     # If user chooses down...
     elif choice == "s":
         # Move down
-        game.next_move(3)
+        game.move(DOWN)
 
     # If user chooses to quit
     elif choice == "q":

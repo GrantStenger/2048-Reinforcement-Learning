@@ -1,13 +1,28 @@
+"""
+To Do:
+Fix camelCase
+* Combine move funtions by rotating the board
+Write funtion disciptions
+"""
+
 import numpy as np
 import os
 import math
 
-class Game(object):
+# Define Constants
+LEFT = 0
+UP = 1
+RIGHT = 2
+DOWN = 3
 
-	def __init__(self, highscore):
+class Game:
 
-		# Initialize high score
-		self.highscore = int(highscore)
+	def __init__(self):
+
+		# Read in high score from file and initialize
+		f = open("highscore.txt", "r")
+		self.highscore = int(f.read())
+		f.close()
 
 		# Initialize current score as 0
 		self.score = 0
@@ -21,6 +36,7 @@ class Game(object):
 		# Use boolean to check if the game is over
 		self.gameOver = False
 
+	# Add a new tile to an empty cell of the board
 	def add_tile(self):
 
 		# Make a list of tuples of all the empty cells
@@ -45,6 +61,7 @@ class Game(object):
 		# Check for game over
 		self.check_for_game_over()
 
+	# Print the board and all other necessary information
 	def display(self):
 
 		# Clear the screen and print the score
@@ -77,140 +94,82 @@ class Game(object):
 			print()
 		print()
 
-	def slide_left(self):
-		# If left is selected, do...
-		cellsChanged = 0
-		original_score = self.score
+	# Implements slide logic by rotating the board as necessary, sliding left,
+	# and rotating back. If the move is real, change the board of this object,
+	# otherwise create a new state with the new board.
+	def move(self, input_action, real = True):
+
+		board = self.board
+		score = self.score
+		totalTiles = self.totalTiles
+
+		# The logic slides left, so to slide up, for example, rotate counter-clockwise
+		num_rotations = input_action
+		board = np.rot90(board, num_rotations)
+
+		# The cells changed counter makes sure we don't make moves where the
+		# board does not change.
+		cells_changed = 0
+
+		# Store the original score to later determine how many points were earned
+		# from this turn specifically.
+		original_score = score
+
+		# Iterate through each row to perform sliding logic
 		for row in range(4):
-			possibleMergeVal = 0
-			nextOpenIndex = 0
+
+			# As we move across the row, we will keep track of the value that
+			# a tile "could be merged with".
+			possible_merge_val = 0
+
+			next_open_index = 0
+
 			for col in range(4):
-				currVal = self.board[row][col]
+				currVal = board[row][col]
+
+				# If the tile is not empty (i.e. curr_val is not 0), check if
+				# merge logic is necessary.
 				if currVal != 0:
-					if currVal == possibleMergeVal:
-						# Merge
-						self.board[row][nextOpenIndex-1] = (currVal * 2)
-						self.board[row][col] = 0
-						possibleMergeVal = (currVal * 2)
-						self.score += (currVal * 2)
-						self.totalTiles -= 1
-						cellsChanged += 1
+					# If the value of the current column is the mergable value,
+					# then merge.
+					if currVal == possible_merge_val:
+						# Change the left cell to be merged to 2 times itself
+						board[row][next_open_index-1] = (currVal * 2)
+						# Set the current cell to 0
+						board[row][col] = 0
+						# Update the score
+						score += (currVal * 2)
+						# Decrement the counter for total tiles on the board
+						totalTiles -= 1
+						# Increment the counter for cells changed
+						cells_changed += 1
+						# After we've merged, no more cells can merge with this
+						possible_merge_val = 0
+					# If the current tile is empty,
 					else:
-						if nextOpenIndex != col:
-							# Slide to the left
-							self.board[row][nextOpenIndex] = currVal
-							self.board[row][col] = 0
-							cellsChanged += 1
-						possibleMergeVal = currVal
-						nextOpenIndex += 1
+						# If there's an open spot somewhere to the left, slide.
+						if next_open_index != col:
+							# Put this tile in the leftmost open spot
+							board[row][next_open_index] = currVal
+							# Empty the current cell
+							board[row][col] = 0
+							# Increment the cell changed counter
+							cells_changed += 1
+						# Update the "mergable value"
+						possible_merge_val = currVal
+						# Update the next open index
+						next_open_index += 1
+
+		# Rotate the board back to its original orientation
+		board = np.rot90(board, 4-num_rotations)
+
+		if real:
+			self.board = board
+			self.score = score
+			self.totalTiles = totalTiles
 
 		# Add a new tile only if the board has changed
-		if cellsChanged != 0:
-			self.add_tile()
-
-		# Return the score_increase to help train the AI
-		score_increase = self.score - original_score
-		return score_increase
-
-	def slide_right(self):
-		# If right is selected, do...
-		cellsChanged = 0
-		original_score = self.score
-		for row in range(4):
-			possibleMergeVal = 0
-			nextOpenIndex = 3
-			for col in range(3, -1, -1):
-				currVal = self.board[row][col]
-				if currVal != 0:
-					if currVal == possibleMergeVal:
-						# Merge
-						self.board[row][nextOpenIndex+1] = (currVal * 2)
-						self.board[row][col] = 0
-						possibleMergeVal = (currVal * 2)
-						self.score += (currVal * 2)
-						self.totalTiles -= 1
-						cellsChanged += 1
-					else:
-						if nextOpenIndex != col:
-							# Slide to the right
-							self.board[row][nextOpenIndex] = currVal
-							self.board[row][col] = 0
-							cellsChanged += 1
-						possibleMergeVal = currVal
-						nextOpenIndex -= 1
-
-		# Add a new tile only if the board has changed
-		if cellsChanged != 0:
-			self.add_tile()
-
-		# Return the score_increase to help train the AI
-		score_increase = self.score - original_score
-		return score_increase
-
-	def slide_up(self):
-		# If up is selected, do...
-		cellsChanged = 0
-		original_score = self.score
-		for col in range(4):
-			possibleMergeVal = 0
-			nextOpenIndex = 0
-			for row in range(4):
-				currVal = self.board[row][col]
-				if currVal != 0:
-					if currVal == possibleMergeVal:
-						# Merge
-						self.board[nextOpenIndex-1][col] = (currVal * 2)
-						self.board[row][col] = 0
-						possibleMergeVal = (currVal * 2)
-						self.score += (currVal * 2)
-						self.totalTiles -= 1
-						cellsChanged += 1
-					else:
-						if nextOpenIndex != row:
-							# Slide up
-							self.board[nextOpenIndex][col] = currVal
-							self.board[row][col] = 0
-							cellsChanged += 1
-						possibleMergeVal = currVal
-						nextOpenIndex += 1
-
-		# Add a new tile only if the board has changed
-		if cellsChanged != 0:
-			self.add_tile()
-
-		# Return the score_increase to help train the AI
-		score_increase = self.score - original_score
-		return score_increase
-
-	def slide_down(self):
-		# If down is selected, do...
-		cellsChanged = 0
-		original_score = self.score
-		for col in range(4):
-			possibleMergeVal = 0
-			nextOpenIndex = 3
-			for row in range(3, -1, -1):
-				currVal = self.board[row][col]
-				if currVal != 0:
-					if currVal == possibleMergeVal:
-						# Merge
-						self.board[nextOpenIndex+1][col] = (currVal * 2)
-						self.board[row][col] = 0
-						possibleMergeVal = (currVal * 2)
-						self.score += (currVal * 2)
-						self.totalTiles -= 1
-						cellsChanged += 1
-					else:
-						if nextOpenIndex != row:
-							# Slide up
-							self.board[nextOpenIndex][col] = currVal
-							self.board[row][col] = 0
-							cellsChanged += 1
-						possibleMergeVal = currVal
-						nextOpenIndex -= 1
-
-		# Add a new tile only if the board has changed
-		if cellsChanged != 0:
+		if cells_changed != 0:
 			self.add_tile()
 
 		# Return the score_increase to help train the AI
@@ -234,24 +193,6 @@ class Game(object):
 		f = open("highscore.txt", "w")
 		f.write(str(self.highscore))
 		f.close()
-
-	def next_move(self, input_action):
-
-		# Find the reward for the chosen move
-		if input_action == 0:
-			reward = self.slide_left()
-		elif input_action == 1:
-			reward = self.slide_right()
-		elif input_action == 2:
-			reward = self.slide_up()
-		else:
-			reward = self.slide_down()
-
-		# Changing reward to 1 if player survives.
-		#if reward > 0:
-		#	reward = 1
-
-		return reward
 
 	def reset(self):
 
