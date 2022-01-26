@@ -5,6 +5,8 @@ To Do:
 import numpy as np
 import os
 import math
+import time
+import random
 
 # Define Constants
 LEFT = 0
@@ -14,25 +16,30 @@ DOWN = 3
 
 class Game:
 
-	def __init__(self, highscore=0):
+	def __init__(self, highscore=0, board=None):
 
 		# Read in high score from file and initialize
 		# f = open("highscore.txt", "r")
 		# self.highscore = int(f.read())
 		# f.close()
+
+
 		self.highscore = highscore
 
 		# Initialize current score as 0
 		self.score = 0
 
 		# Initialize the board with two random tiles
-		self.board = np.zeros((4, 4), dtype=int)
-		self.totalTiles = 0 # Incremented by add_tile
-		self.add_tile()
-		self.add_tile()
+		if board:
+			self.board = board
+		else:
+			self.board = np.zeros((4, 4), dtype=int)
+			self.totalTiles = 0 # Incremented by add_tile
+			self.add_tile()
+			self.add_tile()
 
-		# Use boolean to check if the game is over
-		self.gameOver = False
+			# Use boolean to check if the game is over
+			self.gameOver = False
 
 	# Add a new tile to an empty cell of the board
 	def add_tile(self):
@@ -168,6 +175,8 @@ class Game:
 		if cells_changed != 0:
 			self.add_tile()
 
+		return self.score - self.prevScore
+
 	def getReward(self):
 		return self.score - self.prevScore
 
@@ -201,3 +210,16 @@ class Game:
 		self.add_tile()
 
 		self.gameOver = False
+
+if __name__ == "__main__":
+	start = time.time()
+	for i in range(1000):
+		g = Game()
+		count = 0
+		while not g.gameOver:
+			g.move(random.choice([0,1,2,3]))
+			count += 1
+		print(f"{count=}", end = " | ")
+	end = time.time()
+	print()
+	print("time ", end - start)

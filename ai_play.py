@@ -45,6 +45,7 @@ for episode_i in range(1, EPISODES):
     # Play game until no more moves can be made
     start = time.time()
     while not game.gameOver:
+        
         game_move_count += 1
         # With probability epsilon, select a random action
         if np.random.rand() <= epsilon:
@@ -69,6 +70,7 @@ for episode_i in range(1, EPISODES):
             # If the deque isn't full yet, add new data to the correct location
             D[t,:] = np.hstack((state, action, reward, new_state, done))
 
+        
         # If there are enough items in the deque...
         if t > OBSERVE_COUNT:
             # Sample random transitions from replay memory D
@@ -82,33 +84,28 @@ for episode_i in range(1, EPISODES):
             new_states = replay_batch[:,18:-1]
             dones = replay_batch[:,-1]
 
-            evaluations = player.model.predict(new_states)
-            print("evaluations")
-            print(evaluations)
-            exit()
+            #evaluations = player.model.predict(new_states)
+            recommendedActions = np.zeros((BUFFER_BATCH_SIZE,4))
+            recommendedActions[np.arange(BUFFER_BATCH_SIZE),np.argmax(player.model.predict(new_states),axis=1)] = 1
 
-            targets = rewards
-            targets[np.where(dones==0)] += GAMMA * np.max(evaluations[np.where(dones==0)])
+            new_states = replay_batch[:,18:-1].reshape((BUFFER_BATCH_SIZE,4,4))
 
+            #targets = np.zeros(len(recommendedActions))
+            targets = np.array(rewards, copy=True)
+            for i,ra in enumerate(recommendedActions):
+                if dones[i]:
+                    #oneStepRewardPrediction = np.dot(ra,[game(new_states[i].reshape((4,4))).move(a, validMove=False) for a in range(4)])
+                    oneStepRewardPrediction = Game(new_states[i]).move(np.argmax(ra), validMove=False)
+                    targets[int(i)] += GAMMA * oneStepRewardPrediction
 
+            #print(f"{states=}")
+            #print(f"{targets=}")
 
-            
-
-            # targets = np.zeros(BUFFER_BATCH_SIZE)
-            # for i in range(BUFFER_BATCH_SIZE):
-            #     if dones[i]:
-            #         targets[i] = rewards[i]
-            #     else:
-            #         targets[i] = rewards[i] + GAMMA * np.max(evaluations[i]))
-
-            for i in range(len(evaluations)):
-                evaluations[i][actions[i]] = targets[i]
-
-            player.model.fit(states, evaluations, verbose=0)
+            player.model.fit(states.reshape(BUFFER_BATCH_SIZE,16), targets, verbose=0)
 
             if epsilon > EPSILON_FINAL:
                 epsilon *= EPSILON_DECAY
-        else:
+        elif t <= REPLAY_MEMORY:
             t += 1 # increment timestep
 
         state = new_state # Update state
@@ -119,8 +116,7 @@ for episode_i in range(1, EPISODES):
             state = 'Observing'
         else:
             state = 'Exploring'
-        print("%s %i (%i): %i, %.2f, %.2f" % (state, game_move_count, episode_i, int(game.score),
-            np.mean(scores), (end - start)))
+        print("%s %i (%i): %i, %.2f, %.2f" % (state, game_move_count, episode_i, int(game.score), np.mean(scores), (end - start)))
 
     scores.append(game.score)
     if len(scores) > 100:
