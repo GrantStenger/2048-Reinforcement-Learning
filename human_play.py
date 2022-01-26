@@ -16,25 +16,31 @@ while not game.gameOver:
     game.display()
 
     # Prompt for user input
-    choice = input("w, a, s, d, or q? ")
+    print("Possible inputs:")
+    print("w, a, s, d")
+    print("vim shortcuts")
+    print("arrow keys")
+    print("or q to quit")
+    print()
+    choice = input("Input: ")
 
     # If user chooses left...
-    if choice == "a":
+    if choice in ["a", "^[[D", "h"]:
         # Move left
         game.move(LEFT)
 
     # If user chooses right...
-    elif choice == "d":
+    elif choice in ["d", "\x1b[D", "l"]:
         # Move right
         game.move(RIGHT)
 
     # If user chooses up...
-    elif choice == "w":
+    elif choice in ["w", "\x1b[A", "k"]:
         # Move up
         game.move(UP)
 
     # If user chooses down...
-    elif choice == "s":
+    elif choice in ["s", "\x1b[B", "j"]:
         # Move down
         game.move(DOWN)
 

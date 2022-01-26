@@ -27,12 +27,10 @@ class Player(object):
 
 		# Output layer: 4 neurons (one for each action), consider going back to softmax activation
 		model.add(Dense(units=4))
-		model.add(Activation('linear'))
+		model.add(Activation('softmax'))
 
 		# Compile model
-		model.compile(loss='mse',
-			optimizer='adam',
-			metrics=['accuracy'])
+		model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
 
 		return model
 
@@ -40,5 +38,6 @@ class Player(object):
 		return self.model.predict(np.array([state.flatten()]))[0]
 
 	def select_action(self, state):
+		# Consider the policy where you act stochastically in accordance to the softmax output
 		return np.argmax(self.q_predict(state))
 

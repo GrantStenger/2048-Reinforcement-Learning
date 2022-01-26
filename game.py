@@ -1,8 +1,5 @@
 """
 To Do:
-Fix camelCase
-* Combine move funtions by rotating the board
-Write funtion disciptions
 """
 
 import numpy as np
@@ -17,18 +14,19 @@ DOWN = 3
 
 class Game:
 
-	def __init__(self):
+	def __init__(self, highscore=0):
 
 		# Read in high score from file and initialize
-		f = open("highscore.txt", "r")
-		self.highscore = int(f.read())
-		f.close()
+		# f = open("highscore.txt", "r")
+		# self.highscore = int(f.read())
+		# f.close()
+		self.highscore = highscore
 
 		# Initialize current score as 0
 		self.score = 0
 
 		# Initialize the board with two random tiles
-		self.board = np.zeros((4, 4), dtype=np.int)
+		self.board = np.zeros((4, 4), dtype=int)
 		self.totalTiles = 0 # Incremented by add_tile
 		self.add_tile()
 		self.add_tile()
@@ -54,9 +52,6 @@ class Game:
 
 		# Update totalTiles
 		self.totalTiles += 1
-
-		# Check if high score needs to be updated
-		self.check_high_score()
 
 		# Check for game over
 		self.check_for_game_over()
@@ -95,9 +90,9 @@ class Game:
 		print()
 
 	# Implements slide logic by rotating the board as necessary, sliding left,
-	# and rotating back. If the move is real, change the board of this object,
+	# and rotating back. If the move is valid, change the board of this object,
 	# otherwise create a new state with the new board.
-	def move(self, input_action, real = True):
+	def move(self, input_action, validMove = True):
 
 		board = self.board
 		score = self.score
@@ -111,9 +106,9 @@ class Game:
 		# board does not change.
 		cells_changed = 0
 
-		# Store the original score to later determine how many points were earned
+		# Store the previous score to later determine how many points were earned
 		# from this turn specifically.
-		original_score = score
+		self.prevScore = score
 
 		# Iterate through each row to perform sliding logic
 		for row in range(4):
@@ -163,18 +158,18 @@ class Game:
 		# Rotate the board back to its original orientation
 		board = np.rot90(board, 4-num_rotations)
 
-		if real:
+		if validMove:
 			self.board = board
 			self.score = score
 			self.totalTiles = totalTiles
+			self.check_high_score()
 
 		# Add a new tile only if the board has changed
 		if cells_changed != 0:
 			self.add_tile()
 
-		# Return the score_increase to help train the AI
-		score_increase = self.score - original_score
-		return score_increase
+	def getReward(self):
+		return self.score - self.prevScore
 
 	def check_high_score(self):
 		# If the score is greater than the high score...

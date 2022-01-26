@@ -10,10 +10,10 @@ import keras
 import time
 
 #Parameters Used
-EPISODES = 2000000 # number of times the game is played
+EPISODES = 100000 # number of times the game is played
 EPSILON_INIT = 0.99 # initial probability of doing a random move
-EPSILON_FINAL = 0.01
-EPSILON_DECAY = 0.995 # rate that epsilon decreases every move (if 0.999, after 700 moves epsilon=.5)
+EPSILON_FINAL = 0.0001
+EPSILON_DECAY = 0.999 # rate that epsilon decreases every move (if 0.999, after 700 episodes epsilon=.5)
 BUFFER_BATCH_SIZE = 32 # number of states and targets sampled per training round (25)
 GAMMA = 0.9 #(0.9)
 REPLAY_MEMORY = 50000
@@ -26,19 +26,20 @@ epsilon = EPSILON_INIT # Set initial value of epsilon
 scores = [] # Stores the final score of every game
 
 # Initialize replay memory D where the actions will be stored
-D = deque()
+# D = deque()
+D = np.zeros([REPLAY_MEMORY, 35])
 
 # Initialize the player and the game
 player = Player()
 game = Game(highscore)
 
-t = 1
+t = 0
 
 # Play the game "EPISODES" number of times
 for episode_i in range(1, EPISODES):
     # Start new game
     game.reset()
-    state = np.array(game.board, copy=True) # 4x4 np array containing tile information
+    state = np.array(game.board, copy=True).flatten() # 4x4 np array containing tile information
 
     game_move_count = 0
     # Play game until no more moves can be made
@@ -50,55 +51,67 @@ for episode_i in range(1, EPISODES):
             action = random.randrange(num_actions)
         # Otherwise, select the action with the highest predicted discounted future reward
         else:
-            q_func = player.model.predict(np.array([state.flatten()]))[0]
+            q_func = player.model.predict(state.reshape(1,16))[0]
             action = np.argmax(q_func)
 
         # Execute this action and observe reward r and new state
-        reward = game.next_move(action)
-        new_state = np.array(game.board, copy=True)
+        game.move(action)
+        reward = game.getReward()
+        new_state = np.array(game.board, copy=True).flatten()
         done = game.gameOver
 
-        # Store experience in replay memory D
-
-        D.append((state, action, reward, new_state, done))
         if len(D) > REPLAY_MEMORY:
-            D.popleft()
+            # Pop off the old data from the deque
+            D[:-1,:] = D[1:,:]
+            # Store experience in replay memory D
+            D[-1,:] = np.hstack((state, action, reward, new_state, done))
+        else:
+            # If the deque isn't full yet, add new data to the correct location
+            D[t,:] = np.hstack((state, action, reward, new_state, done))
 
         # If there are enough items in the deque...
         if t > OBSERVE_COUNT:
             # Sample random transitions from replay memory D
-            replay_batch = random.sample(list(D), BUFFER_BATCH_SIZE)
-            states, actions, rewards, new_states, dones = zip(*replay_batch)
+            # replay_batch = random.sample(list(D), BUFFER_BATCH_SIZE)
+            randomRows = np.random.choice(min(t, REPLAY_MEMORY), size=BUFFER_BATCH_SIZE)
+            replay_batch = D[randomRows, :]
+            # states, actions, rewards, new_states, dones = zip(*replay_batch)
+            states = replay_batch[:,0:16]
+            actions = replay_batch[:,16]
+            rewards = replay_batch[:,17]
+            new_states = replay_batch[:,18:-1]
+            dones = replay_batch[:,-1]
 
-            rewards = np.array(rewards)
+            evaluations = player.model.predict(new_states)
+            print("evaluations")
+            print(evaluations)
+            exit()
 
-            new_states = np.array(new_states)
-            new_states = new_states.reshape(-1, new_states.shape[1] *
-                    new_states.shape[2])
+            targets = rewards
+            targets[np.where(dones==0)] += GAMMA * np.max(evaluations[np.where(dones==0)])
 
-            states = np.array(states)
-            states = states.reshape(-1, states.shape[1] * states.shape[2])
 
-            evaluated = player.model.predict(new_states)
 
-            targets = []
-            for i in range(BUFFER_BATCH_SIZE):
-                if dones[i]:
-                    targets.append(rewards[i])
-                else:
-                    targets.append(rewards[i] + GAMMA * np.max(evaluated[i]))
-            targets = np.array(targets)
+            
 
-            for i in range(len(evaluated)):
-                evaluated[i][actions[i]] = targets[i]
+            # targets = np.zeros(BUFFER_BATCH_SIZE)
+            # for i in range(BUFFER_BATCH_SIZE):
+            #     if dones[i]:
+            #         targets[i] = rewards[i]
+            #     else:
+            #         targets[i] = rewards[i] + GAMMA * np.max(evaluations[i]))
 
-            player.model.fit(states, evaluated, verbose=0)
+            for i in range(len(evaluations)):
+                evaluations[i][actions[i]] = targets[i]
+
+            player.model.fit(states, evaluations, verbose=0)
 
             if epsilon > EPSILON_FINAL:
                 epsilon *= EPSILON_DECAY
+        else:
+            t += 1 # increment timestep
 
         state = new_state # Update state
-        t += 1 # increment timestep
 
     end = time.time()
     if episode_i % 1 == 0:
@@ -121,5 +134,4 @@ Next Steps:
 Try Monte Carlo tree search just to get the game working. Deep RL is hard.
 Tweak hyperparameters
 Train for WAY more time.
-
 """
